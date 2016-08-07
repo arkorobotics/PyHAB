@@ -1,16 +1,26 @@
 # PyHAB
-# WRITTEN BY: Arko
-# EMFCAMP 2016 - HABVILLE
+# WRITTEN BY: Arko at EMFCAMP 2016 - HABVILLE
 
 import pyb
 from pyb import UART
 from pyb import SPI
+
+import RFM69
+from RFM69Dict import registers, config
 
 state = "RESET";
 
 # Initialize perpherial variables
 uart = UART(1, 9600)
 spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
+rfm69 = RFM69.RFM69()
+
+led = pyb.LED(4)
+led.toggle()
+pyb.delay(250)
+led.toggle()
+pyb.delay(250)
+led.toggle()
 
 def fault(*args):
     global state
@@ -42,12 +52,8 @@ def init():
 	# (DIO0, RESET, NSS, SCK, MISO, MOSI) 
 	# (X3,   X4,    X5,  X6,  X7,   X8) 
 	# (PA2,  PA3,   PA4, PA5, PA6,  PA7)
-	spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
-
-	#data = spi.send_recv(b'1234', *, timeout=5000)	# send 4 bytes and receive 4 bytes
-	#buf = bytearray(4)
-	#spi.send_recv(b'1234', buf, *, timeout=5000)	# send 4 bytes and receive 4 into buf
-	#spi.send_recv(buf, buf, *, timeout=5000)        # send/recv 4 bytes from/to buf
+	#spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
+	rfm69 = RFM69.RFM69()
 
 	return "GPS_ACQ"
 
@@ -68,6 +74,7 @@ def gps_acq():
 
 def parse_gps():
 	print ("Parsing GPS data")
+	print (rfm69.spi_read(registers["RFM69_REG_10_VERSION"]))
 	return "TRANSMIT"
 
 def transmit():
