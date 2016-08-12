@@ -12,7 +12,7 @@ state = "RESET";
 
 # Initialize perpherial variables
 uart = UART(1, 9600)
-spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
+#spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
 rfm69 = RFM69.RFM69()
 
 led = pyb.LED(4)
@@ -47,13 +47,25 @@ def init():
 	uart.init(9600, bits=8, stop=1, parity=None, timeout=5000)
 
 
-	# Initialize Radio
+	# Initialize Radio (RFM69)
 	# SPI(1) is on PA:
 	# (DIO0, RESET, NSS, SCK, MISO, MOSI) 
 	# (X3,   X4,    X5,  X6,  X7,   X8) 
 	# (PA2,  PA3,   PA4, PA5, PA6,  PA7)
-	#spi = SPI(1, SPI.MASTER, baudrate=1000000, polarity=0, phase=0, firstbit=SPI.MSB, crc=None)
 	rfm69 = RFM69.RFM69()
+
+	# Check version
+	if (rfm69.getVersion() == 0x24):
+		print ("RFM69 Version Valid: 0x24")
+	else:
+		print ("RFM69 Version Invalid!")
+		return "FAULT"
+
+	data = bytearray(3)
+	data[0] = 5
+	data[1] = 8
+	data[2] = 9
+	rfm69.send(data, 3, 15)
 
 	return "GPS_ACQ"
 
@@ -61,20 +73,25 @@ def gps_acq():
 	print ("Acquiring GPS data")
 
 	# Default GPS Data is 8 lines
-	print (uart.readline())	#GNVTG
-	print (uart.readline()) #GNGGA
-	print (uart.readline()) #GNGSA
-	print (uart.readline()) #GNGSA
-	print (uart.readline()) #GPGSV
-	print (uart.readline()) #GPGSV
-	print (uart.readline()) #GNGLL
-	print (uart.readline()) #GNRMC
+	#print (uart.readline())	#GNVTG
+	#print (uart.readline()) #GNGGA
+	#print (uart.readline()) #GNGSA
+	#print (uart.readline()) #GNGSA
+	#print (uart.readline()) #GPGSV
+	#print (uart.readline()) #GPGSV
+	#print (uart.readline()) #GNGLL
+	#print (uart.readline()) #GNRMC
 
 	return "PARSE_GPS"
 
 def parse_gps():
 	print ("Parsing GPS data")
-	print (rfm69.spi_read(registers["RFM69_REG_10_VERSION"]))
+
+	print ("Temperature: %d" % rfm69.readTemp())
+	
+	while (True):
+		pass # HALT AND CATCH FIRE
+
 	return "TRANSMIT"
 
 def transmit():
