@@ -17,6 +17,8 @@ registers = {
 "RFM69_MODE_STDBY" :    0x04, # 1.25mA
 "RFM69_MODE_RX" :       0x10, # 16mA
 "RFM69_MODE_TX" :       0x0c, # >33mA
+"RFM69_REG_58_TEST_LNA" :       0x58,
+"RF_TESTLNA_SENSITIVE" :        0x2D,
 "RFM69_REG_00_FIFO" :           0x00,
 "RFM69_REG_01_OPMODE" :         0x01,
 "RFM69_REG_02_DATA_MODUL" :     0x02,

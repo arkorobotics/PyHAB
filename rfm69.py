@@ -27,8 +27,13 @@ class RFM69:
 		self.dio0_pin = 'X3'
 		self.conf = self.configure()
 		self.mode = self.set_mode()
-		self.bufLen = 0
-		self.buf = bytearray(registers["RFM69_MAX_MESSAGE_LEN"])
+
+		self.txBufLen = 0
+		self.txBuf = bytearray(registers["RFM69_MAX_MESSAGE_LEN"])
+		
+		self.rxBufLen = 0
+		self.rxBuf = bytearray(registers["RFM69_MAX_MESSAGE_LEN"])
+
 		self.version = self.getVersion()
 		self.lastRssi = -(self.spi_read(registers["RFM69_REG_24_RSSI_VALUE"])/2)
 		self.paLevel = 15
@@ -43,12 +48,13 @@ class RFM69:
 		self.version = self.spi_read(registers["RFM69_REG_10_VERSION"])
 		return self.version
 
-	def set_mode(self, newMode=registers["RFM69_MODE_SLEEP"]):
+	def set_mode(self, newMode=registers["RFM69_MODE_RX"]):
 		self.spi_write(registers["RFM69_REG_01_OPMODE"], (self.spi_read(registers["RFM69_REG_01_OPMODE"]) & 0xE3) | newMode)
-		self.mode = newMode
+		self.mode = (self.spi_read(registers["RFM69_REG_01_OPMODE"]) & 0xE3) | newMode
 		return newMode
 
 	def get_mode(self):
+		self.mode = self.spi_read(registers["RFM69_REG_01_OPMODE"])
 		return self.mode
 
 	def init_gpio(self):
@@ -72,24 +78,37 @@ class RFM69:
 		sleep(0.1)
 
 	def checkRx(self):
-		if (self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PAYLOADREADY"]):
-			bufLen = self.spi_read(registers["RFM69_REG_00_FIFO"])+1
-			self.buf = self.spi_burst_read(registers["RFM69_REG_00_FIFO"], registers["RFM69_FIFO_SIZE"])
-			self.lastRssi = -(self.spi_read(registers["RFM69_REG_24_RSSI_VALUE"])/2)
-			self.clearFifo()
+		print ("MODE: %d" % self.get_mode())
+		while ((self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PAYLOADREADY"]) != registers["RF_IRQFLAGS2_PAYLOADREADY"]):
+			pass
+		print ("MODE: %d" % self.get_mode())
+		print ("IRQ Flag: %d" % self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]))
+		self.rxBufLen = self.spi_read(registers["RFM69_REG_00_FIFO"])+1
+		print ("RX Buffer Length: %d" % self.rxBufLen)
+		self.rxBuf = self.spi_burst_read(registers["RFM69_REG_00_FIFO"], registers["RFM69_FIFO_SIZE"])
+		self.lastRssi = -(self.spi_read(registers["RFM69_REG_24_RSSI_VALUE"])/2)
+		self.clearFifo()
 
 	def recv(self):
-		return (self.buf, self.bufLen, self.lastRssi)
+		# Store received data for return
+		rxTuple = (self.rxBuf, self.rxBufLen, self.lastRssi)
+
+		# Clear RX buffer
+		self.rxBufLen = 0
+		self.rxBuf = bytearray(registers["RFM69_MAX_MESSAGE_LEN"])
+		
+		# Return received telemetry
+		return rxTuple
 
 	def send(self, data, length, power):
 		if (power<2 or power > 20):
 			return False	#Dangerous power levels
 
 		oldMode = self.mode
-
+		print ("OLD MODE: %d" % self.mode)
 		# Copy into TX buffer
-		self.buf = data
-		self.bufLen = length
+		self.txBuf = data
+		self.txBufLen = length
 
 		# Start Transmitter
 		self.set_mode(registers["RFM69_MODE_TX"])
@@ -110,14 +129,14 @@ class RFM69:
 			self.spi_write(registers["RFM69_REG_11_PA_LEVEL"], registers["RF_PALEVEL_PA0_OFF"] | registers["RF_PALEVEL_PA1_ON"] | registers["RF_PALEVEL_PA2_ON"] | self.paLevel )
 
 		# Wait for PA ramp-up
-		while((self.spi_read(registers["RFM69_REG_27_IRQ_FLAGS1"]) & registers["RF_IRQFLAGS1_TXREADY"]) == 0):
+		while((self.spi_read(registers["RFM69_REG_27_IRQ_FLAGS1"]) & registers["RF_IRQFLAGS1_TXREADY"]) == registers["RF_IRQFLAGS1_TXREADY"]):
 			pass
 
 		# Transmit
-		self.write_fifo(self.buf)
+		self.write_fifo(self.txBuf)
 
 		# Wait for packet to be sent
-		while ((self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PACKETSENT"]) == 0):
+		while ((self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PACKETSENT"]) == registers["RF_IRQFLAGS2_PACKETSENT"]):
 			pass
 
 		# Return Transceiver to original mode
@@ -128,6 +147,10 @@ class RFM69:
 			self.spi_write(registers["RFM69_REG_5A_TEST_PA1"], 0x55)
 			self.spi_write(registers["RFM69_REG_5C_TEST_PA2"], 0x70)
 			self.spi_write(registers["RFM69_REG_13_OCP"], (registers["RF_OCP_ON"] | registers["RF_OCP_TRIM_95"]))
+
+		# Clear TX buffer
+		self.txBufLen = 0
+		self.txBuf = bytearray(registers["RFM69_MAX_MESSAGE_LEN"])
 
 		print ("Transmission complete!")
 
@@ -145,7 +168,7 @@ class RFM69:
 
 		self.spi_write(registers["RFM69_REG_4E_TEMP1"], registers["RF_TEMP1_MEAS_START"])
 
-		while (self.spi_read(registers["RFM69_REG_4E_TEMP1"]) == 0x04):
+		while (self.spi_read(registers["RFM69_REG_4E_TEMP1"]) == registers["RF_TEMP1_MEAS_RUNNING"]):
 			pass
 
 		rawTemp = self.spi_read(registers["RFM69_REG_4F_TEMP2"])
@@ -167,7 +190,7 @@ class RFM69:
 		self.spi_write(registers["RFM69_REG_23_RSSI_CONFIG"], registers["RF_RSSI_START"])
 
 		# Wait for Measurement to complete
-		while((registers["RF_RSSI_DONE"] == 0x02) and (self.spi_read(registers["RFM69_REG_23_RSSI_CONFIG"]) == 0)):
+		while((self.spi_read(registers["RFM69_REG_23_RSSI_CONFIG"]) & registers["RF_RSSI_DONE"]) == registers["RF_RSSI_DONE"]):
 			pass
 
 		# Read, store in _lastRssi and return RSSI Value
@@ -188,10 +211,10 @@ class RFM69:
 	def spi_burst_read(self, register, length):
 		data = bytearray(length+1)
 		data[0] = register & ~0x80
-		for i in range(1,length):
+		for i in range(1,length+1):
 			data[i] = 0
 		# We get the length again as the first character of the buffer
-		buf = bytearray(length)
+		buf = bytearray(length+1)
 		self.nss.low()
 		self.spi.send_recv(data, buf, timeout=5000)
 		self.nss.high()

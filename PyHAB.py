@@ -8,6 +8,8 @@ from pyb import SPI
 import RFM69
 from RFM69Dict import registers, config
 
+from time import sleep, time
+
 state = "RESET";
 
 # Initialize perpherial variables
@@ -61,26 +63,20 @@ def init():
 		print ("RFM69 Version Invalid!")
 		return "FAULT"
 
-	data = bytearray(3)
-	data[0] = 5
-	data[1] = 8
-	data[2] = 9
-	rfm69.send(data, 3, 15)
-
 	return "GPS_ACQ"
 
 def gps_acq():
 	print ("Acquiring GPS data")
 
 	# Default GPS Data is 8 lines
-	#print (uart.readline())	#GNVTG
-	#print (uart.readline()) #GNGGA
-	#print (uart.readline()) #GNGSA
-	#print (uart.readline()) #GNGSA
-	#print (uart.readline()) #GPGSV
-	#print (uart.readline()) #GPGSV
-	#print (uart.readline()) #GNGLL
-	#print (uart.readline()) #GNRMC
+	print (uart.readline())	#GNVTG
+	print (uart.readline()) #GNGGA
+	print (uart.readline()) #GNGSA
+	print (uart.readline()) #GNGSA
+	print (uart.readline()) #GPGSV
+	print (uart.readline()) #GPGSV
+	print (uart.readline()) #GNGLL
+	print (uart.readline()) #GNRMC
 
 	return "PARSE_GPS"
 
@@ -88,15 +84,29 @@ def parse_gps():
 	print ("Parsing GPS data")
 
 	print ("Temperature: %d" % rfm69.readTemp())
-	
-	while (True):
-		pass # HALT AND CATCH FIRE
 
 	return "TRANSMIT"
 
 def transmit():
 	print ("Transmitting position and telemetry")
-	return "GPS_ACQ"
+	
+	data = bytearray(3)
+	data[0] = 5
+	data[1] = 8
+	data[2] = 9
+	rfm69.send(data, 3, 15)
+
+	print (" ")
+	print (" ")
+	sleep(5)
+	print ("Check rx buf")
+	rfm69.set_mode(registers["RFM69_MODE_RX"])
+	rfm69.setLnaMode(registers["RF_TESTLNA_SENSITIVE"])
+	rfm69.checkRx()
+	print (rfm69.recv())
+	print (" ")
+	#return "GPS_ACQ"
+	return "INIT"
 
 states = {
 		"FAULT": fault,
