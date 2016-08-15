@@ -90,11 +90,11 @@ def parse_gps():
 def transmit():
 	print ("Transmitting position and telemetry")
 	
-	data = bytearray(3)
-	data[0] = 5
-	data[1] = 8
-	data[2] = 9
-	rfm69.send(data, 3, 15)
+	#data = bytearray(3)
+	#data[0] = 255
+	#data[1] = 255
+	#data[2] = 255
+	#rfm69.send(data, 3, 15)
 
 	print (" ")
 	print (" ")
@@ -106,7 +106,7 @@ def transmit():
 	print (rfm69.recv())
 	print (" ")
 	#return "GPS_ACQ"
-	return "INIT"
+	return "PARSE_GPS"
 
 states = {
 		"FAULT": fault,

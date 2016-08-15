@@ -97,6 +97,8 @@ registers = {
 "RFM69_REG_4E_TEMP1" :          0x4E,
 "RFM69_REG_4F_TEMP2" :          0x4F,
 "RF_TEMP1_MEAS_START" :         0x08,
+"RFM69_REG_5A_TEST_PA1" :       0x5A,
+"RFM69_REG_5C_TEST_PA2" :       0x5C,
 }
 
 config = {
@@ -106,9 +108,9 @@ config = {
     "RFM69_REG_04_BITRATE_LSB" : 0x80,
     "RFM69_REG_05_FDEV_MSB" :    0x00, # 12000 hz (24000 hz shift)
     "RFM69_REG_06_FDEV_LSB" :    0xC5,
-    "RFM69_REG_07_FRF_MSB" :     0xD9, # 869.5 MHz
-    "RFM69_REG_08_FRF_MID" :     0x60, # calculated: 0x80?
-    "RFM69_REG_09_FRF_LSB" :     0x12,
+    "RFM69_REG_07_FRF_MSB" :     0x6C, #0xD9, # 869.5 MHz
+    "RFM69_REG_08_FRF_MID" :     0x80, #0x60, # calculated: 0x80?
+    "RFM69_REG_09_FRF_LSB" :     0x00, #0x12,
     "RFM69_REG_0B_AFC_CTRL" :    registers["RF_AFCLOWBETA_OFF"], # AFC Offset On
     "RFM69_REG_11_PA_LEVEL" : registers["RF_PALEVEL_PA0_OFF"] | registers["RF_PALEVEL_PA1_ON"] | registers["RF_PALEVEL_PA2_ON"] | 0x1f, # 50mW
     "RFM69_REG_12_PA_RAMP" : registers["RF_PARAMP_500"], # 500us PA ramp-up (1 bit)
