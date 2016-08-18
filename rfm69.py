@@ -51,7 +51,9 @@ class RFM69:
 	def set_mode(self, newMode=registers["RFM69_MODE_RX"]):
 		self.spi_write(registers["RFM69_REG_01_OPMODE"], (self.spi_read(registers["RFM69_REG_01_OPMODE"]) & 0xE3) | newMode)
 		while(self.spi_read(registers["RFM69_REG_01_OPMODE"]) != newMode):
+			self.spi_write(registers["RFM69_REG_01_OPMODE"], (self.spi_read(registers["RFM69_REG_01_OPMODE"]) & 0xE3) | newMode)
 			print ("Waiting... Attempted mode: %d" % newMode)
+			sleep(1)
 			pass
 		self.mode = newMode
 		return newMode

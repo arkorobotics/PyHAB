@@ -85,25 +85,29 @@ def parse_gps():
 
 	print ("Temperature: %d" % rfm69.readTemp())
 
-	print ("RSSI: %d" % rfm69.sampleRssi())
+	#print ("RSSI: %d" % rfm69.sampleRssi())
 	return "TRANSMIT"
 
 def transmit():
 	print ("Transmitting position and telemetry")
 	
-	data = bytearray(58)
+	data = bytearray(56)
 	data[0] = 255
 	data[1] = 255
 	data[2] = 255
 	data[3] = 5
 	data[4] = 8
 	data[5] = 9
-	rfm69.send(data, 58, 19)
+	data[6] = 0x41
+	data[7] = 0x52
+	data[8] = 0x41
+	data[9] = 0x20
+	rfm69.send(data, 56, 19)
 
 	print (" ")
 	print (" ")
 	sleep(1)
-	#print ("Check rx buf")
+	print ("Check rx buf")
 	rfm69.set_mode(registers["RFM69_MODE_RX"])
 	rfm69.setLnaMode(registers["RF_TESTLNA_SENSITIVE"])
 	rfm69.checkRx()
