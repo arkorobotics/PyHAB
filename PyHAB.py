@@ -90,19 +90,10 @@ def parse_gps():
 
 def transmit():
 	print ("Transmitting position and telemetry")
-	
-	data = bytearray(56)
-	data[0] = 255
-	data[1] = 255
-	data[2] = 255
-	data[3] = 5
-	data[4] = 8
-	data[5] = 9
-	data[6] = 0x41
-	data[7] = 0x52
-	data[8] = 0x41
-	data[9] = 0x20
-	rfm69.send(data, 56, 19)
+
+	data = bytearray(b"3iL34.154,-118.128V589:N6ARA[PyHAB]")
+
+	rfm69.send(data, len(data), 19)
 
 	print (" ")
 	print (" ")
@@ -112,6 +103,7 @@ def transmit():
 	rfm69.setLnaMode(registers["RF_TESTLNA_SENSITIVE"])
 	rfm69.checkRx()
 	print (rfm69.recv())
+	rfm69.clearFifo()
 	print (" ")
 	#return "GPS_ACQ"
 	return "PARSE_GPS"
