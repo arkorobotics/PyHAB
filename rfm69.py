@@ -85,8 +85,8 @@ class RFM69:
 	def checkRx(self):
 		print ("MODE: %d" % self.get_mode())
 		print ("Waiting for Payload")
-		#while ((self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PAYLOADREADY"]) != registers["RF_IRQFLAGS2_PAYLOADREADY"]):
-		#	pass
+		while ((self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]) & registers["RF_IRQFLAGS2_PAYLOADREADY"]) != registers["RF_IRQFLAGS2_PAYLOADREADY"]):
+			pass
 		print ("MODE: %d" % self.spi_read(registers["RFM69_REG_01_OPMODE"]))
 		print ("IRQ Flag: %d" % self.spi_read(registers["RFM69_REG_28_IRQ_FLAGS2"]))
 		self.rxBufLen = self.spi_read(registers["RFM69_REG_00_FIFO"])+1
