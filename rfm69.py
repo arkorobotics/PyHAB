@@ -15,7 +15,8 @@ from pyb import SPI
 
 from time import sleep, time
 
-from RFM69Dict import registers, config
+from registers import registers
+from config import config
 
 class RFM69:
 	def __init__(self, reset_pin=None, dio0_pin=None, spi_channel=None, config=None):
