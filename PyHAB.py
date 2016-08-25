@@ -6,7 +6,8 @@ from pyb import UART
 from pyb import SPI
 
 import RFM69
-from RFM69Dict import registers, config
+from registers import registers
+from config import config
 
 from time import sleep, time
 
