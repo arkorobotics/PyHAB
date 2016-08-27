@@ -7,6 +7,7 @@
 # Based on RF22.h
 # Author: Mike McCauley (mikem@open.com.au)
 # Copyright (C) 2011 Mike McCauley
+from registers import registers
 
 config = {
     "RFM69_REG_01_OPMODE" :      registers["RF_OPMODE_SEQUENCER_ON"] | registers["RF_OPMODE_LISTEN_OFF"] | registers["RFM69_MODE_RX"],
